@@ -1,0 +1,3 @@
+The file impvol sp500 atm tom.txt contains at-the-money implied volatilities (i.e., It(1,τ)) with different times to maturity (τ = T − t) of European calls on the S&P500 index for the period from January 3, 2005 to April 10, 2006.
+(a) (5p) Plot the implied volatility surface versus different dates and different times to maturity. You can use wireframe in the R package lattice or surf in MATLAB to plot functions of two variables as surfaces.
+(b) (5p)PerformPCAforthedifferencedseries∆t(1,τ)=logt(1,τ)−logIt−1(1,τ). Plot the first three eigenvectors versus τ.
