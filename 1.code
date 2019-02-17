@@ -1,0 +1,130 @@
+#load relevant package
+#install.packages("dlm")
+library(dlm)
+
+# calculate the market premium and the risk premium
+sp500 <- read.delim("~/Desktop/STATS4261_Final/m_sp500ret_3mtcm.txt", skip=1)
+dim(sp500)
+sp500 <- sp500[,-c(2,4)]
+stock10 <- read.table("m_logret_10stocks.txt", header = T)
+return_stock <- as.matrix(stock10[,-1])
+excess_sp500 <- sp500$sp500 - sp500$X3mTCM/100/12
+excess_stock <- apply(return_stock, 2, function(x){x-sp500$X3mTCM/100/12}) 
+
+q <- ncol(excess_stock)
+n <- length(excess_sp500)
+
+n1 <- which(sp500[,1] == "Jun-98")
+n2 <- length(excess_sp500)-n1
+
+# fit to the ten stocks
+#January 1994 to June 1998
+capm1 <- lm(excess_stock[1:n1, ] ~ excess_sp500[1:n1]) 
+summary(capm1)
+alpha1 <- capm1$co[1,]
+beta1 <- capm1$co[2,]
+mu1 <- colMeans(excess_stock[1:n1,])
+
+#July 1998 to December 2006
+capm2 <- lm(excess_stock[(n1+1):n, ] ~ excess_sp500[(n1+1):n]) 
+summary(capm2)
+alpha2 <- capm2$co[1,]
+beta2 <- capm2$co[2,]
+mu2 <- colMeans(excess_stock[(n1+1):n,])
+
+#add dummy variable to represent period, add interaction, and fit a model 
+#for the combined dataset
+
+#adopting 5% as threshold, result shows only for AMD, the interaction is 
+#significant which means estimated betas are significantly different for 
+#the two periods. The for rest companies, interaction is not significant, 
+#indicating estimated betas is not significantly different for the two periods.
+
+condition <- data.frame(matrix(0, nrow = n, ncol = 1))
+condition[(n1+1):n,] <- 1
+interaction <-excess_sp500*condition
+capm_merge <- lm(excess_stock ~ excess_sp500 + as.matrix(condition) 
+                 + as.matrix(interaction))
+summary(capm_merge)
+
+#(b) Kalman filters for time varying betas
+#after ploting the 2 sets of betas, they largely agree with each other 
+#because the plot shows approximately a line (y=x)
+
+kalmanf.update<-function(y, g, xt.t, Pt.t, F, sig2W, sig2v){
+  Pta.t<-F*F*Pt.t+sig2w	
+  Pta.ta <- Pta.t - (Pta.t*g)^2/(g*g*Pta.t+sig2v)
+  xta.t <- F*xt.t
+  xta.ta <- xta.t + Pta.t*g/ (g*g*Pta.t+ sig2v)*(y-g*xta.t)
+  list(xt.t=xta.ta, Pt.t = Pta.ta)
+}
+
+kalmanf.estx <- function(y, G, G0, fit0, sig2w) {
+  est.x <- est.P <- rep(0, length(y)+1)
+  sig2v <- sum(fit0$resid^2)/length(fit0$resid)
+  est.x[1] <- xt.t <- as.numeric(fit0$coeff)
+  est.P[1] <- Pt.t <- sum(fit0$resid^2)/(length(fit0$resid)-1)/sum(G0^2)
+  F <- 1
+  for (i in 1:length(y)) {
+    kalmanf <- kalmanf.update(y[i], G[i], xt.t, Pt.t, F, sig2w, sig2v)
+    est.x[i+1] <- xt.t <- kalmanf$xt.t
+    est.P[i+1] <- Pt.t <- kalmanf$Pt.t
+  }
+  list(est.x = est.x, est.P = est.P)
+}
+
+ts.beta<-function(y, G, seg0, sig2w) {
+  fit0 <- lm(y[seg0] ~ G[seg0] - 1)
+  est <- kalmanf.estx(y[-seg0], G[-seg0], G[seg0], fit0, sig2w)
+  est
+}
+
+###	learning period = 54 month
+seg0 <- seq(1,54)
+
+### This file perform a CAPM analysis for six stocks vs Dow Jones index
+sig2w <- 0.04	### = sigma2W
+est.AAPL <- ts.beta(excess_stock[,1], as.matrix(excess_sp500), seg0, sig2w)
+est.ADBE <- ts.beta(excess_stock[,2], as.matrix(excess_sp500), seg0, sig2w)
+est.ADP <- ts.beta(excess_stock[,3], as.matrix(excess_sp500), seg0, sig2w)
+est.AMD <- ts.beta(excess_stock[,4], as.matrix(excess_sp500), seg0, sig2w)
+est.DELL <- ts.beta(excess_stock[,5], as.matrix(excess_sp500), seg0, sig2w)
+est.GTW <- ts.beta(excess_stock[,6], as.matrix(excess_sp500), seg0, sig2w)
+est.HP <- ts.beta(excess_stock[,7], as.matrix(excess_sp500), seg0, sig2w)
+est.IBM <- ts.beta(excess_stock[,8], as.matrix(excess_sp500), seg0, sig2w)
+est.MSFT <- ts.beta(excess_stock[,9], as.matrix(excess_sp500), seg0, sig2w)
+est.ORCL <- ts.beta(excess_stock[,10], as.matrix(excess_sp500), seg0, sig2w)
+
+### recursive beta's
+recursive.beta <- function(y, G, seg0) {
+  fit0 <- lm(y[seg0] ~ G[seg0] - 1)
+  est.x <- est.P <- rep(0, length(y)-length(seg0)+1)
+  est.x[1] <- fit0$coeff
+  est.P[1] <- sum(fit0$resid^2)/(length(fit0$resid)-1)/sum(G[seg0]^2)
+  for (i in length(seg0):length(y)) {
+    fit<-lm(y[1:i] ~ G[1:i] -1)
+    est.x[i-length(seg0)+2] <- fit$coeff
+  }
+  list(est.x=est.x)
+}
+
+est.AAPL <- recursive.beta(excess_stock[,1], as.matrix(excess_sp500), seg0)
+est.ADBE <- recursive.beta(excess_stock[,2], as.matrix(excess_sp500), seg0)
+est.ADP <- recursive.beta(excess_stock[,3], as.matrix(excess_sp500), seg0)
+est.AMD <- recursive.beta(excess_stock[,4], as.matrix(excess_sp500), seg0)
+est.DELL <- recursive.beta(excess_stock[,5], as.matrix(excess_sp500), seg0)
+est.GTW <- recursive.beta(excess_stock[,6], as.matrix(excess_sp500), seg0)
+est.HP <- recursive.beta(excess_stock[,7], as.matrix(excess_sp500), seg0)
+est.IBM <- recursive.beta(excess_stock[,8], as.matrix(excess_sp500), seg0)
+est.MSFT <- recursive.beta(excess_stock[,9], as.matrix(excess_sp500), seg0)
+est.ORCL <- recursive.beta(excess_stock[,10], as.matrix(excess_sp500), seg0)
+
+dlm_beta=c(tail(est.AAPL$est.x, n=1), tail(est.ADBE$est.x, n=1), 
+           tail(est.ADP$est.x, n=1), tail(est.AMD$est.x, n=1), 
+           tail(est.DELL$est.x, n=1), tail(est.GTW$est.x, n=1), 
+           tail(est.HP$est.x, n=1), tail(est.IBM$est.x, n=1), 
+           tail(est.MSFT$est.x, n=1), tail(est.ORCL$est.x, n=1))
+
+plot(dlm_beta, beta2)
+
+```
