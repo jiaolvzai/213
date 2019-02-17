@@ -1,0 +1,143 @@
+```{r}
+# set the working directory
+setwd("~/Desktop/STATS4261_MidTerm")
+
+# load relevant package and library
+install.packages("ISLR")
+library(ISLR)
+
+# import dataset and preview
+data_sp500 <- read.delim("~/Desktop/STATS4261_MidTerm/data/m_sp500ret_3mtcm.txt", skip=1)
+dim(data_sp500)
+data_sp500 <- data_sp500[,-c(2,4)]
+
+data_10stocks <- read.delim("~/Desktop/STATS4261_MidTerm/data/m_logret_10stocks.txt")
+dim(data_10stocks)
+data_10stocks <- data_10stocks[,-1]
+data_10stocks <- data_10stocks[-c(157,158,159),]
+dim(data_10stocks)
+```
+
+**(a) (7.5p) Using a single-index model for the structured covariance matrix F, calculate the estimate F hat of F in (2)**
+```{r}
+sp500 <- data_sp500[,2]
+data_10stocks <- as.matrix(data_10stocks)
+var_sp500=var(sp500)
+fit <- lm(data_10stocks~sp500)
+beta <- coef(fit)[2,]
+F <- var_sp500 * (beta%*%t(beta)) + diag(diag(cov(resid(fit))))
+F
+```
+
+**(b)Compute the covariance estimate (2) with F in (a) and the weight suggested by Ledoit and Wolf, and plot the estimated efficient frontier using this covariance estimate. **
+```{r}
+n <- nrow(data_10stocks)
+p <- ncol(data_10stocks)
+
+S <- t(data_10stocks-mean(data_10stocks,2))%*%(data_10stocks-mean(data_10stocks,2))/n
+
+gamma <- sum(sum((F-S)^2))
+
+sigma.bar <- 0
+for (i in 1:(p-1)){
+  for (j in (i+1):p){
+    sigma.bar <- sigma.bar + S[i,j]/sqrt(S[i,i]*S[j,j])
+} }
+
+sigma.bar <- sigma.bar*2/(p*(p-1))
+
+pi <- 0
+pi.ij <- function(i,j){
+  sum(( (data_10stocks[,i]-mean(data_10stocks[,i])) * 
+          (data_10stocks[,j]-mean(data_10stocks[,j])) -S[i,j])^2 )/n
+}
+for (i in 1:p){
+  for (j in 1:p){
+    pi <- pi + pi.ij(i,j)
+  } 
+}
+
+theta <- function(k,i,j){
+  sum( ((data_10stocks[,k]-mean(data_10stocks[,k]))^2-S[k,k])*
+         ((data_10stocks[,i]-mean(data_10stocks[,i])) *
+            (data_10stocks[,j]-mean(data_10stocks[,j])) -S[i,j]) )/n
+}
+
+rho <- 0
+for (i in 1:p){
+  rho <- rho + pi.ij(i,i)
+  for (j in 1:p){
+    if (j!=i){
+      rho <- rho + sigma.bar*(sqrt(S[j,j]/S[i,i])*theta(i,i,j)
+      +sqrt(S[i,i]/S[j,j])*theta(j,i,j))/2
+    } 
+  }
+}
+
+kappa <- (pi-rho)/gamma
+delta <- min(1,max(kappa/n, 0))
+
+# plot the estimated efficient frontier using the covariance estimate
+frontier <- function(mean, Cov, mu.star){
+  inverseCov <- solve(Cov)
+  ones <- rep(1,length(mean))
+  A <- as.numeric(mean %*% inverseCov %*% ones)
+  B <- as.numeric(mean %*% inverseCov %*% mean)
+  C <- as.numeric(ones %*% inverseCov %*% ones)
+  D <- B*C-A^2
+  return((B*inverseCov%*%ones - A*inverseCov%*%mean
+   + mu.star*(C*inverseCov%*%mean - A*inverseCov%*%ones))/D)
+}
+
+mu <- apply(data_10stocks,2,mean)
+Sigma <- delta*F+(1-delta)*S
+mus <- seq(0,0.02,0.0005)
+weights <- sapply(mus, function(x){frontier(mean=mu, Cov=Sigma,x)})
+risk <- function(x){sqrt(x%*%Sigma%*%x)}
+sigs <- apply(weights, 2, risk)
+plot(sigs,mus,type="l")
+```
+
+**(c) (7.5p) Perform PCA on the ten stocks. Using the first two principal components as factors in a two-factor model for F (see Section 3.4.3), estimate F.**
+```{r}
+# Scale variables
+stad_10stocks <- scale(data_10stocks, center = TRUE, scale = TRUE)
+
+# perform PCA on the scaled dataset
+pca_10stocks <- prcomp(stad_10stocks)
+pc_10stocks <- stad_10stocks%*%pca_10stocks$rotation  
+var_10stocks <- pca_10stocks$sdev^2  
+
+# extract the first two principal components as factors in a two-factor model for F
+f1 <- pc_10stocks[,1]
+f2 <- pc_10stocks[,2]
+
+fit <- lm(as.matrix(data_10stocks)~f1+f2)
+beta1 <- coef(fit)[2,]
+beta2 <- coef(fit)[3,]
+F_Qc <- var_10stocks[1]*(beta1%*%t(beta1))+var_10stocks[2]*
+  (beta2%*%t(beta2))+diag(diag(cov(resid(fit))))
+F_Qc
+```
+
+**(d) (10p) Using the estimated F hat in (c) as the shrinkage target in (2), compute the new value of weight and the new shrinkage estimate (2) of sigma. Plot the corresponding estimated efficient frontier and compare it with that in (b).**
+```{r}
+# substitue F with F_Qc and redo the process in (b), duplicate steps omitted
+gamma_new <- sum(sum((F_Qc-S)^2))
+kappa_new <- (pi-rho)/gamma_new
+delta_new <- min(1,max(kappa_new/n, 0))
+
+#plot the estimated efficient frontier using the new estimate
+Sigma_new <- delta_new*F_Qc+(1-delta_new)*S
+weights_new <- sapply(mus, function(x){frontier(mean=mu, Cov=Sigma_new,x)})
+risk_new <- function(x){sqrt(x%*%Sigma_new%*%x)}
+sigs_new <- apply(weights_new, 2, risk)
+
+#compare the plot
+par(mfrow=c(2,2)) 
+plot(sigs_new,mus,type="l")
+plot(sigs,mus,type="l")
+
+# The final plots resemble each other. Choosing single-index model or two factor model 
+#does not make much difference in this case.
+```
