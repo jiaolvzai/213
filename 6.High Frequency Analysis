@@ -1,0 +1,5 @@
+The file ibm   intrastrade   200306.txt contains the transaction data on the New York Stock Exchange for IBM stock in June 2003. The data are obtained from Wharton Research Data Services.
+(a) (5p) Let xi denote the number of trades in the ith 5-minute interval. Ignoring the time gaps between trading days, this gives the time series xt of the number of trades on IBM stock in 5-minute intervals on the NYSE in June, 2003. Plot the time series and its ACF. Determine if there are intraday period patterns in the series.
+(b) (5p) Using the last transaction price in the ith 5-minute interval as the stock price in that interval, plot the time series yt of 5-minute log returns during the period and the corresponding ACF.
+(c) (5p) Consider the bivariate time series (xt,yt). How does yt vary with xt? Are there intraday periodic patterns in (xt, yt)?
+(d) (5p) Tabulate the relative frequencies of price changes in multiples of the tick size $0.0625.
