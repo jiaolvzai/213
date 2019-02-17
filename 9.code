@@ -1,0 +1,101 @@
+```{r}
+# set the working directory
+setwd("~/Desktop/STATS4261_MidTerm")
+
+# load relevant package and library
+install.packages("ISLR")
+library(ISLR)
+
+# import dataset and preview
+data_swap <- read.delim("~/Desktop/STATS4261_MidTerm/data/m_swap.txt", skip=1)
+data_swap <- data_swap[,-c(1,10,11)]
+```
+
+
+**(a) (5p) Perform a principal component analysis (PCA) of the data using the sample covariance matrix.**
+**(b) (5p) Perform a PCA of the data using the sample correlation matrix.**
+```{r}
+# use princomp package to fit in corvariance matrix and correlation matrix respectively.
+PCA_covariance <- princomp(data_swap, cor=F)
+PCA_correlation <- princomp(data_swap, cor=T)
+summary(PCA_covariance)
+summary(PCA_correlation)
+```
+
+**(c) (5p) Compare your results with those in Section 2.2.3 of the textbook (also given in one of the lectures) for the daily data. Discuss the influence of sampling frequency on the result.**
+#The PCA results of both daily and monthly data show desirable explanation over the total variance. Sampling frequency does not exert significant influence on the result based on current dataset.
+
+
+**Additional methods**
+# compare the PCA results with manual eigen vectors method (spectral approach) and svd method based on the prcomp package.
+
+```{r}
+# spectral approach
+# Sample size
+n <- nrow(data_swap)
+
+# Scale variables
+X.central <- scale(data_swap, center = TRUE, scale = FALSE)
+X.central.scale <- scale(data_swap, center = TRUE, scale = TRUE)
+
+# Compute eigenvalues and eigenvectors
+eigen_var <- eigen(t(X.central)%*%(X.central)/(n-1))
+eigen_cor <- eigen(t(X.central.scale)%*%(X.central.scale)/(n-1))
+
+# Display eigenvectors
+eigen_var.vecs <- eigen_var$vectors
+eigen_var.vecs
+
+eigen_cor.vecs <- eigen_cor$vectors
+eigen_cor.vecs
+
+# Display eigenvalues 
+eigen_var.vals <- eigen_var$values
+eigen_var.vals
+
+eigen_cor.vals <- eigen_cor$values
+eigen_cor.vals
+
+# Scores 
+Z_var <- X.central%*%eigen_var.vecs
+names(Z_var) <- c("Z1","Z2","Z3","Z4")
+
+Z_cor <- X.central.scale%*%eigen_cor.vecs
+names(Z_cor) <- c("Z1","Z2","Z3","Z4")
+```
+
+
+```{r}
+# package based on svd decomposition
+# Center and scale the dataset, Run the PCA using prcomp() based on svd of the original sample data.
+PCA_SVD <- prcomp(data_swap, scale = TRUE)
+PCA_SVD
+
+# Extract standard deviations 
+PCA_SVD$sdev
+
+# Extract loadings
+PCA_SVD$rotation
+
+# Extract scores
+head(PCA_SVD$x)
+```
+
+```{r}
+# Biplot 
+biplot(PCA_SVD)
+```
+
+```{r}
+# plot to check the explained variance
+plot(PCA_SVD)
+
+# Scree plot
+screeplot(PCA_SVD,type="l")
+
+# Cumulative variance
+variance <- (PCA_SVD$sdev)^2
+cvar <- cumsum(variance)/sum(variance)
+plot(cvar,col="blue")
+lines(cvar,col="blue")
+```
