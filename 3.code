@@ -1,0 +1,39 @@
+```{r}
+# set the working directory
+setwd("~/Desktop/STATS4261_Final")
+
+#load relevant packages
+#install.packages("rrr")
+library(rrr)
+#install.packages("CCA")
+library(CCA)
+
+#import data
+auto <- read.table("m_logret_4auto.txt", header = T)
+auto <- auto[,-c(1)]
+soft <- read.table("m_logret_4soft.txt", header = T)
+soft <- soft[,-c(1)]
+```
+
+```{r}
+#(a) Perform a canonical correlation analysis
+correl <- matcor(auto, soft)
+img.matcor(correl, type = 2)
+cc <- cc(auto, soft) 
+cc$cor
+barplot(cc$cor, main = "Canonical correlations for 'cc()'")
+cc$xcoef
+cc$ycoef
+plt.cc(cc, var.label = TRUE)
+```
+
+```{r}
+#(b) Perform reduced-rank regression
+args(rrr)
+rrr(soft, auto, rank = 2) 
+
+#Diagnostics
+#Calculate Residuals
+args(residuals)
+residuals(soft, auto, rank = 2, plot = TRUE)
+```
