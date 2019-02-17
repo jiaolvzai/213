@@ -1,0 +1,5 @@
+The file intel_d_logret.txt contains daily log returns of Intel stock from July 9, 1986 to June 29, 2007. Compute the 99% 1-day and 10-day VaR for a long position of $1 million using the following methods (as internal models in Section 12.1.2 of the textbook):
+(a) GARCH(1,1) model with standard normal εt;
+(b) EGARCH(1, 1) model with standard normal εt;
+(c) ARMA(1, 1)-GARCH(1, 1) model with εt having the standardized Student t-distribution whose degrees of freedom are to be estimated from the data;
+(d) the GEV distribution for extreme (negative) returns with subperiod length of 20 trading days.
