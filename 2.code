@@ -1,3 +1,8 @@
+```{r}
+#(a)
+# set the working directory
+setwd("~/Desktop/STATS4261_Final")
+
 #import data
 data <- read.table("sp500_d_logret.txt", header = T)
 data <- data[,-c(1)]
