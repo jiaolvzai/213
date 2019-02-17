@@ -1,0 +1,14 @@
+Ledoit and Wolf (2003, 2004) propose to estimate μ by X but to shrink the MLE of Σ toward structured covariance matrices that can have relatively small ”estimation error” in comparison with the MLE of Σ. Let S = Σnt=1(rt − r)(rt − r)T /n. Ledoit and Wolf’s rationale is that S has a large estimation error (or, more precisely, variances of the matrix entries) when p(p + 1)/2 is comparable with n, whereas a structured covariance matrix F) has much fewer parameters and can therefore be estimated with much smaller variances. In particular, they consider F that corresponds to the single-factor model in CAPM (see Sections 3.3 and 3.4) and point out that its disadvantage is that Σ may not equal F, resulting in a bias of F(hat) when the assumed structure (e.g., CAPM) does not hold. They therefore propose to estimate Σ by a convex combination of F(hat) and S:
+  Σ = δF + (1 − δ)S, (2) where δ􏰌 is an estimator of the optimal shrinkage constant δ used to shrink the MLE toward
+the estimated structured covariance matrix F(hat).
+
+The file m ret 10stocks.txt contains the monthly returns of ten stocks from January 1994 to December 2006. The ten stocks include Apple Computer, Adobe Systems, Auto- matic Data Processing, Advanced Micro Devices, Dell, Gateway, Hewlett-Packard Com- pany, International Business Machines Corp., Microsoft Corp., and Oracle Corp. The file m_sp500ret_3mtcm.txt contains three columns. The second column gives the monthly returns of the S & P 500 index January 1994 to December 2006. The third column gives the monthly rates of the 3-month Treasury bill in the secondary market, which are obtained from the Federal Reserve Bank of St. Louis and used as the risk-free rate here. Consider portfolios that consist of the ten stocks and allow short selling.
+(a) (7.5p) Using a single-index model for the structured covariance matrix F, calculate the estimate F(hat) of F in (2)
+(b) (10p) The δ(hat) in (2) in the textbook and suggested by Ledoit and Wolf (2003, 2004) is of the following form. Let fij(hat) and σ(hat)ij denote the (i, j)the entry of F and S, respectively, and define
+
+...(see 11.fomula)
+
+
+Then δ(hat) = min{1, (κ(hat)/n)+}. Compute the covariance estimate (2) with F(hat) in (a) and the δ(hat) suggested by Ledoit and Wolf, and plot the estimated efficient frontier using this covariance estimate.
+(c) (7.5p) Perform PCA on the ten stocks. Using the first two principal components as factors in a two-factor model for F (see Section 3.4.3), estimate F.
+(d) (10p) Using the estimated F(hat) in (c) as the shrinkage target in (2), compute the new value of δ and the new shrinkage estimate (2) of Σ. Plot the corresponding estimated efficient frontier and compare it with that in (b).
