@@ -1,0 +1,8 @@
+The file d nasdaq 82stocks.txt contains the daily log returns of the NASDAQ Composite Index and 82 stocks from January 3, 1990 to December 29, 2006. We want to track the returns of NASDAQ by using a small number of stocks from the given 82 stocks.
+(a) (5p) Construct a full regression model.
+(b) (5p) Use partial F-statistics and backward elimination to select variables fro the full
+regression model in (a). Write down the selected model.
+(c) (5p) Compare the full and selected models. Summarize your comparison in a ANOVA table.
+(d) (5p) For the selected regression model in (b), perform residual diagnostics.
+(e) (5p) If you can only use at most five stocks to track the daily NASDAQ log returns,
+describe your model selection procedure and your constructed model.
