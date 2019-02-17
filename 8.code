@@ -1,0 +1,128 @@
+```{r}
+# set the working directory
+setwd("~/Desktop/STATS4261_MidTerm")
+
+# load relevant package and library
+
+install.packages("olsrr")
+install.packages("data.table")
+install.packages("later")
+install.packages("leaps")
+library(olsrr)
+library(ISLR)
+library(leaps)
+
+# import dataset and preview
+data_82stocks <- read.delim("~/Desktop/STATS4261_MidTerm/data/d_nasdaq_82stocks.txt")
+View(data_82stocks)
+data_82stocks <- data_82stocks[,-3] 
+data_82stocks <- data_82stocks[,-1] 
+```
+
+```{r}
+# check the number of features loaded and check na
+ncol(data_82stocks)
+any(is.na(data_82stocks))
+```
+
+**(a) (5p) Construct a full regression model.**
+```{r}
+# fit the full regression model
+lm.full <- lm(Nasdaq ~ ., data=data_82stocks) 
+summary(lm.full)
+```
+
+**(b) (5p) Use partial F-statistics and backward elimination to select variables fro the full regression model in (a). Write down the selected model.**
+```{r}
+# backwise select variables from the full regression model (partial F-test). Keep removing 
+#the least significant variables, until all remaining variables are more significant than
+#a pre-specified cutoff (set at 0.1).
+ols_step_backward_p(lm.full, prem = 0.1, details = FALSE)
+```
+
+```{r}
+# construct the reduced model
+lm.reduced<- lm(formula = Nasdaq ~ AAPL + ALTR + AMAT + AMD + AMGN + AOC + 
+    APD + ASH + AT + AXP + BA + BBY + BC + BLL + C + CCL + CEG + 
+    CFC + COST + DD + DELL + DIS + ED + EDS + EIX + F + FRX + 
+    GE + GPS + HON + HPC + HPQ + HSY + HUM + IBM + INTC + IPG + 
+    JNJ + JPM + KBH + KMI + KO + KR + LEG + LEN + LM + LUV + 
+    MAS, data = data_82stocks) 
+summary(lm.reduced)
+```
+
+**(c) (5p) Compare the full and selected models. Summarize your comparison in a ANOVA table.**
+```{r}
+# compare the full and selected models in a ANOVA table.It appears the full model 
+#does not significantly decrease the residual sum of squares or increase the 
+#predictive power.
+anova(lm.full,lm.reduced,test="Chisq")
+```
+
+**(d) (5p) For the selected regression model in (b), perform residual diagnostics.**
+```{r}
+# residual diagnose
+par(mfrow=c(2,2))
+par(mar = rep(2, 4))
+plot(lm.reduced)
+
+# interpretation
+# According to the residuals vs fitted plot, residuals distribute largely 
+#evenly as fitted value changes.
+
+# The QQ plot tests if the residuals follow a normal distribution. The result 
+#shows relative long tails at both ends of the data distribution. 
+
+#According to the scale-location plot, residuals are heteroscedastic because their 
+#variances changes over predicted range.
+
+#According to the leverage plot, no point falls outside dotted line which means 
+#high leverage.
+```
+
+**(e) (5p) If you can only use at most five stocks to track the daily NASDAQ log returns, describe your model selection procedure and your constructed model.**
+```{r}
+# choose five stocks
+# I would try different feature model selection methods such as p value based 
+#forward selection and AIC-based forward selection, best subset and then compare 
+#and integrate the results. The construction of the model is at the last segment.
+
+ols_step_forward_p(lm.full, details = FALSE)
+```
+
+```{r}
+ols_step_forward_aic(lm.full, details = FALSE)
+```
+
+```{r}
+feature.selection <- regsubsets(Nasdaq ~ .,data_82stocks, really.big=TRUE, nvmax=5)
+summary.subset <- summary(feature.selection)
+summary.subset
+summary.subset$rsq
+```
+
+```{r}
+# Plot rsq as a function of the number of features
+plot(summary.subset$rsq,xlab="p",ylab="rsq")
+which.max(summary.subset$rsq)
+```
+
+```{r}
+# Plot bic as a function of the number of features
+summary.subset$bic
+plot(summary.subset$bic,xlab="p",ylab="BIC")
+which.min(summary.subset$bic)
+```
+
+```{r}
+# Plot cp as a function of the number of features
+summary.subset$cp
+plot(summary.subset$cp,xlab="p",ylab="Cp")
+which.min(summary.subset$cp)
+```
+
+```{r}
+# construct the model with five variables.
+lm.fiveVar <- lm(Nasdaq ~ INTC+GE+ALTR+LM+AMAT, data = data_82stocks)
+summary(lm.fiveVar)
+```
