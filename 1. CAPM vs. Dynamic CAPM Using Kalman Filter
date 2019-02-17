@@ -1,0 +1,6 @@
+The file m sp500ret 3mtcm.txt contains three columns. The second column gives the monthly returns of the S&P500 index from January 1994 to December 2006. The third column gives the monthly rates of the 3-month U.S. Treasury bill in the secondary market, which are obtained from the Federal Reserve Bank of St. Louis and used as the risk-free rate here. Consider the ten monthly log returns in the file m_logret_10stocks.txt.
+(a) (5p) For each stock, fit CAPM for the period from January 1994 to June 1998 and for the subsequent period from July 1998 to December 2006. Are your estimated betas significantly different for the two periods?
+(b) (5p) Consider the dynamic linear model
+rt −rf,t =βt(rM,t −rf,t)+εt, βt+1 =βt +wt+1,
+with independent εt ∼ N(0,σ2) and wt ∼ N(0,σw2 ), for CAPM with timevarying be- tas. Use the Kalman filter with σw = 0.2 to estimate βt sequentially during the period July 1998-December 2006. The estimated beta β and error variance σhat^2 obtained in
+(a) for the period from January 1994 to June 1998 can be used to initialize β0 and to substitute for σ2 in the Kalman filter. Plot, compare, and discuss your sequential estimates with the estimate of beta in (a) for the period July 1998 to December 2006.
