@@ -1,0 +1,70 @@
+```{r}
+# set the working directory
+setwd("~/Desktop/STATS4261_Final")
+
+#install.packages("tseries")
+library(tseries)
+#install.packages("urca")
+library(urca)
+```
+
+```{r}
+#(a) augmented Dickey-Fuller test
+series <- read.table("m_cofi_4rates.txt", header=T)
+rates <- ts(series[,1:5], freq=12, start=c(1989, 9))
+
+#cannot reject null hypothesis that the rates are non-stationary 
+#for each of the five rate
+adf.test(rates[,1], alternative = "stationary")
+adf.test(rates[,2], alternative = "stationary")
+adf.test(rates[,3], alternative = "stationary")
+adf.test(rates[,4], alternative = "stationary")
+adf.test(rates[,5], alternative = "stationary")
+```
+
+```{r}
+#(b)Johansen’s test for the number of cointegration vectors
+rates.co <- ca.jo(rates, type="eigen", ecdet="const", K=2, season=NULL)
+summary(rates.co)
+```
+
+```{r}
+#(c)Estimate the cointegration vectors and use them to describe the 
+#equilibrium rela- tionship between the five rates.
+attach(series)
+coin1<-cofi-5.016228*X1ycmt + 1.447589*X5ycmt+1.798685*primeRate+1.274463*X3mTbill.2mkt
+coin2<-cofi+2.8868596*X1ycmt-0.9385606*X5ycmt+0.2357253*primeRate-3.3546732*X3mTbill.2mkt
+res<-cbind(coin1, coin2)
+```
+
+```{r}
+#(d)Regress COFI on the four other rates. Discuss the economic meaning 
+#of this regression relationship and whether the regression is spurious
+
+# the regression output shows that the coefficients of X1ycmt, X5ycmt, 
+#and X3mTbill.2mkt are significant.
+
+# for both ADF test and PP test, null hypotheis of non-stationary is rejected.
+
+# KPSS 's null hypothesis that an observable time series is stationary 
+#around a deterministic trend is not rejected.
+
+#overall, the regression seems not spurious.
+#economic meaning of this regression relationship-
+
+#The 11th District Cost of Funds Index (COFI) is a monthly weighted average 
+#of the interest rates paid on checking and savings accounts offered by 
+#financial institutions operating in Arizona, California and Nevada. 
+#It is computed using several different factors, with interest paid on 
+#savings accounts comprising the largest weighting in the average. 
+#As a result, the index tends to have low volatility and follows market 
+#interest rate changes somewhat slowly; it is generally regarded as a 
+#two-month lagging indicator of market interest rates. It makes sense in 
+#our case because we choose K=2 (time lag) in our model.
+
+summary(lm(cofi ~ X1ycmt + X5ycmt + primeRate + X3mTbill.2mkt) )
+fit <- lm(cofi ~ X1ycmt + X5ycmt + primeRate + X3mTbill.2mkt)
+adf.test(fit$resid)
+PP.test(fit$resid)
+kpss.test(fit$resid)
+```
