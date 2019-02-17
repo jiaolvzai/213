@@ -1,0 +1,10 @@
+Let yt be a q × 1 vector of excess returns on q assets and let xt be the excess return on the market portfolio (or, more precisely, its proxy) at time t. The capital asset pricing model can be associated with the null hypothesis H0 : α = 0 in the regression model
+yt =α+xtβ+εt, 1≤t≤n, (1) where E(εt) = 0, Cov(εT ) = V, and E(xtεt) = 0. Note that (1) is a multivariate represen-
+tationofqregressionmodelsoftheformytj =αj +xtβj +εtj,j=1,...,q.
+The file m sp500ret 3mtcm.txt contains three columns. The second column gives the monthly returns of the S & P 500 index from January 1994 to December 2006. The third column gives the monthly rates of the 3-month U. S. Treasury bill in the secondary market, which is obtained from the Federal Reserve Bank of St. Louis and used as the risk-free asset here. Consider the ten monthly returns in the file m   ret   10stocks.txt.
+(a) (5p) Fit CAPM to the ten stock. Give point estimates and 95% confidence intervals of α,β, the Sharpe index, and the Treynor index. (Hint: Use the delta method for the Sharpe and Treynor indices.)
+(b) (5p) Use the bootstrap procedure in Section 3.5 to estimate the standard error of the point estimates of α, β, and the Sharpe and Treynor indices.
+(c) (5p) Test for each stock the null hypothesis α = 0.
+(d) (5p) Use the regression model (1) to test for the ten stocks the null hypothesis α = 0.
+(e) (5p) Perform a factor analysis on the excess returns of the ten stocks. Show the factor loadings and rotated factor loadings. Explain your choice of the number of factors.
+(f) (5p) Consider the model rte = β11{t<t0}rMe + β21{t≥t0}rMe + εt
