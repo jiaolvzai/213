@@ -1,0 +1,4 @@
+The file m swap.txt contains the monthly swap rates rkt for eight maturities Tk = 1,2,3,4,5,7, 10, and 30 years from July 2000 to June 2007.
+(a) (5p) Perform a principal component analysis (PCA) of the data using the sample covariance matrix.
+(b) (5p) Perform a PCA of the data using the sample correlation matrix.
+(c) (5p) Compare your results with those in Section 2.2.3 of the textbook (also given in one of the lectures) for the daily data. Discuss the influence of sampling frequency on the result.
