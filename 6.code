@@ -1,0 +1,94 @@
+```{r}
+# set the working directory
+setwd("~/Desktop/STATS4261_Final")
+
+#install relevant package
+#install.packages("xts")
+#install.packages("vars")
+library(vars)
+library(lubridate)
+library(reshape)
+library(xts)
+library(tseries)
+
+#prepare dataset
+data <- read.table("ibm_intraday_200306.txt", header=T)
+any(is.na(data))
+```
+
+```{r}
+#(a)Plot the time series and its ACF
+# There are intraday period patterns in the series. More trades appear 
+#at the beginning and closing time of a trading day (smile pattern). 
+
+#Plot also shows large spike at lag 1 that decreases after a few lags, 
+#indicating an autoregressive term in the data. 
+
+# combine data with time 
+dt_tm <- with(data, ymd(DATE) + hms(TIME))
+
+# cut dt_tm to 5 minutes intervals
+ct <- cut(dt_tm, breaks="5 mins")
+
+# convert to POSIXct
+ct_tm <- as.POSIXct(as.character(ct),tz="GMT")
+
+#prepare five minute time series
+fiveMin <- xts(data, order.by=ct_tm)
+
+#aggregrate trade and prepare new time series
+intervalSum<-aggregate(as.numeric(fiveMin$SIZE),melt(ct_tm), FUN = sum)
+timeSeries<-xts(intervalSum,order.by=intervalSum$value)[,-c(1)]
+
+#plot time series and ACF
+par(mfcol=c(1,1))
+plot.ts(timeSeries)
+acf(as.numeric(timeSeries), plot=TRUE)
+```
+
+```{r}
+#(b)
+#prepare time series for the last price of the five minute slot
+lastPrice<-aggregate(as.numeric(fiveMin$PRICE),melt(ct_tm), FUN = tail, n=1)
+
+#calculate five mintute log returns and prepare y time series
+logReturn <- diff(log(lastPrice$x), lag=1)
+timeSeries_y<-xts(logReturn,order.by=(lastPrice[-c(1650),])$value)
+
+#plot time series and ACF
+plot.ts(timeSeries_y)
+acf(as.numeric(timeSeries_y), plot=TRUE)
+```
+
+```{r}
+#(c)bivariate time series analysis
+
+# multivariate time series analysis using VAR model
+#result shows a positive correlated pattern.
+
+# form dataset for VAR model
+y.Q <- cbind(timeSeries, timeSeries_y)
+y.Q <- window(y.Q, start="2003-06-02 09:30:00", end="2003-06-30 15:55:00")
+
+# selection criteria summary
+VARselect(y.Q, lag.max=8, type="const")
+
+# estimate a reduced form VAR(2) : Matrix A <- based on SC criteria
+varp <- VAR(y.Q, ic="AIC", lag.max=9, type="const")
+varp
+summary(varp)
+
+# multivariate Jarque-Bera test
+normality.test(varp)
+```
+
+```{r}
+#(d)
+#calculate price change multiple for each five mintue interval
+priceChange<-round(diff(lastPrice$x, lag=1)/0.0625,digits=0)
+#generate a frequency table
+frequency<-table(priceChange)
+#generate the barplot for frequency
+plot(frequency)
+
+```
