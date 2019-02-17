@@ -1,0 +1,77 @@
+```{r}
+# set the working directory
+setwd("~/Desktop/STATS4261_Final")
+
+#install relevant package
+#install.packages("fGarch")
+library(fGarch)
+#install.packages("rugarch")
+library(rugarch)
+#install.packages("VaRES")
+library(VaRES)
+#install.packages("evir")
+library(evir) 
+library(xts) 
+
+#prepare time series data
+data <- read.table("intel_d_logret.txt", header = F)
+intel <- xts(data, order.by= as.Date(data$V1, format="%m/%d/%Y"))[,-c(1)]
+intel_numeric <-data[,-c(1)]
+```
+
+```{r}
+#(a) fit garch(1,1) with standard normal error
+#fit the model
+garch<-garchFit(formula = ~garch(1, 1), data = intel_numeric, include.mean = TRUE)
+#predict one day ahead
+predict_garch <-predict(garch, n.ahead = 1, plot = FALSE)
+#calculate var
+Var_99_1day_garch <-1000000*(predict_garch$meanForecast+qnorm(0.99)*
+                               predict_garch$standardDeviation)
+Var_99_1day_garch
+```
+
+```{r}
+#(b)fit egarch(1,1) with standard normal error
+#note:the dataset actually goes to July 2,2007 in the txt instead of
+#June 29,2007 in the question pdf, so t0 is 2007-07-02 in the forecast.
+#fit the model
+spec = ugarchspec(variance.model = list(model = "eGARCH", garchOrder = c(1,1)),
+    mean.model = list(armaOrder = c(0,0), include.mean = TRUE),
+    distribution.model = "norm")
+egarch<-ugarchfit(data = intel, spec = spec)
+#predict one day head
+predict_egarch <-ugarchforecast(egarch, n.ahead = 1,plot = FALSE)
+#calculate var
+Var_99_1day_egarch <-1000000*(fitted(predict_egarch)+qnorm(0.99)*sigma(predict_egarch))
+Var_99_1day_egarch
+
+```
+
+```{r}
+#(c)fit arma(1,1)-garch(1,1) with standardized student t-distribution error
+#fit the model and estimate degree of freedom
+# 6.846431e+00 is the Final Estimate of shape, thus degree of freedom (v) 
+#used in calculating var
+arma_garch<-garchFit(formula = ~arma(1,1) + garch(1, 1), data = intel_numeric, 
+                     include.mean = TRUE, cond.dist = "std", include.shape = TRUE)
+v<-6.846431e+00
+#predict one day ahead
+predict_arma_garch <-predict(arma_garch, n.ahead = 1, plot = FALSE)
+#calculate var
+Var_99_1day_arma_garch <-1000000*(predict_arma_garch$meanForecast
+                                  +qstd(0.99,nu=5)*
+                                    predict_arma_garch$standardDeviation*
+                                    (v/(v-2))^0.5)
+Var_99_1day_arma_garch
+
+```
+
+```{r}
+
+#(d) plot the GEV distribution
+par(mfcol=c(2,1))
+gev=gev(intel,block=21)
+gev
+plot(gev)
+```
