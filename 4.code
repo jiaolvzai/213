@@ -1,0 +1,68 @@
+```{r}
+# set the working directory
+setwd("~/Desktop/STATS4261_Final")
+
+#install.packages("lattice")
+library(lattice)
+#install.packages("reshape2")
+library(reshape2)
+```
+
+```{r}
+#(a)Plot the implied volatility surface versus different dates 
+#and different times to maturity
+data <- read.table("impvol_sp500_atm_tom.txt", header = F)
+tau <-data[1,]
+impvol <-data[-c(1),]
+period <-as.double(seq(1, 320, by = 1))
+
+z=c(melt(impvol)[,-c(1)])
+y=c(rep(period,20))
+x=c(rep(as.numeric(tau), each=320))
+
+surface <- data.frame(x,y,z)
+
+wireframe(z ~ x*y, data=surface, xlab = "Maturity", ylab = "Date", 
+          zlab = "Volatility", main = "Implied volatility surface", 
+          drape = TRUE, colorkey = TRUE)
+```
+
+```{r}
+#(b)Perform PCA for the differenced series
+#fit PCA
+diff<-diff(log(as.matrix(impvol), base = exp(1)), differences=1)
+PCA <- prcomp(diff, scale = TRUE)
+summary(PCA)
+
+# Extract loadings(plot eigen vestors versus tau)
+library(car) 
+loading <- data.frame(PCA$rotation[,1:3],maturity=(1:20))
+rownames(loading) = 1:20
+scatterplot(PC1~maturity,data=loading)
+scatterplot(PC2~maturity,data=loading)
+scatterplot(PC3~maturity,data=loading)
+```
+
+```{r}
+#addtional PCA plot
+# Extract standard deviations 
+PCA$sdev
+
+# Extract scores
+head(PCA$x[,1:3])
+
+# Biplot 
+biplot(PCA)
+
+# plot to check the explained variance
+plot(PCA)
+
+# Scree plot
+screeplot(PCA,type="l")
+
+# Cumulative variance
+variance <- (PCA$sdev)^2
+cvar <- cumsum(variance)/sum(variance)
+plot(cvar,col="blue")
+lines(cvar,col="blue")
+```
